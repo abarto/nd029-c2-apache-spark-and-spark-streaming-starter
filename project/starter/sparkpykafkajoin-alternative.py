@@ -55,10 +55,11 @@ customer_stream_df = spark\
             customer_schema
         ).alias("customer")
     )\
-    .filter(col("customer.birthDay").isNotNull())\
+    .select(col("customer.*"))\
+    .filter(col("birthDay").isNotNull())\
     .select(
-        col("customer.email").alias("email"),
-        regexp_extract("customer.birthDay", "^(\d{4})-.*$", 1).alias("birthYear")
+        "email",
+        regexp_extract("birthDay", "^(\d{4})-.*$", 1).alias("birthYear")
     )
 
 
@@ -73,8 +74,8 @@ customer_score_stream_df = spark\
         from_json(col("value").cast("string"), stedi_event_schema).alias("stedi_event"),
     )\
     .select(
-        col("stedi_event.customer").alias("customer"),
-        col("stedi_event.score").alias("score"),
+        expr("stedi_event.customer").alias("customer"),
+        expr("stedi_event.score").alias("score"),
     )
 
 customer_stream_df.join(
