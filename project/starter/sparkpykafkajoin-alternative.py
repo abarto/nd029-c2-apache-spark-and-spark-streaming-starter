@@ -47,7 +47,7 @@ customer_stream_df = spark\
     .option("startingOffsets", "earliest")\
     .load()\
     .select(
-        from_json(col("value").cast("string"),redis_message_schema).alias("value"),
+        from_json(col("value").cast("string"), redis_message_schema).alias("value"),
     )\
     .select(
         from_json(
@@ -89,6 +89,6 @@ customer_stream_df.join(
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:9092")\
     .option("topic", "customer-risk")\
-    .option("checkpointLocation","/tmp/kafkacheckpoint")\
+    .option("checkpointLocation", "/tmp/kafkacheckpoint")\
     .start()\
     .awaitTermination()
