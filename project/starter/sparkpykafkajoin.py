@@ -188,9 +188,8 @@ customerRiskStreamingDF = spark.sql("SELECT customer, score FROM CustomerRisk")
 customer_risk_birthyear_df = emailAndBirthYearStreamingDF\
     .join(
         customerRiskStreamingDF,
-        expr("""email = customer"""
+        expr("email = customer")
     )
-)
 
 
 # TO-DO: sink the joined dataframes to a new kafka topic to send the data to the STEDI graph application 
