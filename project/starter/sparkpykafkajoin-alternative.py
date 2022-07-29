@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, to_json, col, unbase64, regexp_extract, struct
+from pyspark.sql.functions import from_json, to_json, col, unbase64, regexp_extract, struct, expr
 from pyspark.sql.types import StructField, StructType, StringType, BooleanType, ArrayType
 
 
@@ -51,7 +51,7 @@ customer_stream_df = spark\
     )\
     .select(
         from_json(
-            unbase64(col('value.zSetEntries[0].element').cast("string")),
+            unbase64(expr('value.zSetEntries[0].element').cast("string")),
             customer_schema
         ).alias("customer")
     )\
