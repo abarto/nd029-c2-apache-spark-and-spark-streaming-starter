@@ -42,7 +42,7 @@ spark.sparkContext.setLogLevel("WARN")
 customer_stream_df = spark\
     .readStream\
     .format("kafka")\
-    .option("kafka.bootstrap.servers", "kafka:9092")\
+    .option("kafka.bootstrap.servers", "kafka:19092")\
     .option("subscribe", "redis-server")\
     .option("startingOffsets", "earliest")\
     .load()\
@@ -51,7 +51,7 @@ customer_stream_df = spark\
     )\
     .select(
         from_json(
-            unbase64(expr('value.zSetEntries[0].element').cast("string")),
+            unbase64(expr('value.zSetEntries[0].element')).cast("string"),
             customer_schema
         ).alias("customer")
     )\
@@ -66,7 +66,7 @@ customer_stream_df = spark\
 customer_score_stream_df = spark\
     .readStream\
     .format("kafka")\
-    .option("kafka.bootstrap.servers", "kafka:9092")\
+    .option("kafka.bootstrap.servers", "kafka:19092")\
     .option("subscribe", "stedi-events")\
     .option("startingOffsets", "earliest")\
     .load()\
@@ -75,8 +75,9 @@ customer_score_stream_df = spark\
     )\
     .select(
         expr("stedi_event.customer").alias("customer"),
-        expr("stedi_event.score").alias("score"),
+        expr("stedi_event.score").alias("score")
     )
+
 
 customer_stream_df.join(
         customer_score_stream_df,
@@ -84,12 +85,12 @@ customer_stream_df.join(
     )\
     .select(
         col("customer").cast("string").alias("key"),
-        to_json(struct("*")).alias("value")
+        to_json(struct("*")).cast("string").alias("value")
     )\
     .writeStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers", "kafka:9092")\
+    .option("kafka.bootstrap.servers", "kafka:19092")\
     .option("topic", "customer-risk")\
-    .option("checkpointLocation", "/tmp/kafkacheckpoint")\
+    .option("checkpointLocation", "/tmp/kafkacheckpoint2")\
     .start()\
     .awaitTermination()

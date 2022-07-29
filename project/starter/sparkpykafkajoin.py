@@ -51,7 +51,7 @@ spark.sparkContext.setLogLevel("WARN")
 redis_server_topic_df = spark\
     .readStream\
     .format("kafka")\
-    .option("kafka.bootstrap.servers", "kafka:9092")\
+    .option("kafka.bootstrap.servers", "kafka:19092")\
     .option("subscribe", "redis-server")\
     .option("startingOffsets", "earliest")\
     .load()
@@ -101,7 +101,7 @@ redis_server_topic_df\
 
 # TO-DO: execute a sql statement against a temporary view, which statement takes the element field from the 0th element in the array of structs and create a column called encodedCustomer
 # the reason we do it this way is that the syntax available select against a view is different than a dataframe, and it makes it easy to select the nth element of an array in a sql column
-z_set_entries_encoded_df = spark.sql("select key, zSetEntries[0].element as encodedCustomer from RedisSortedSet")
+z_set_entries_encoded_df = spark.sql("select zSetEntries[0].element as encodedCustomer from RedisSortedSet")
 
 
 # TO-DO: take the encodedCustomer column which is base64 encoded at first like this:
@@ -127,11 +127,12 @@ z_set_entries_encoded_df = z_set_entries_encoded_df\
 z_set_entries_encoded_df\
     .withColumn("customer", from_json("encodedCustomer", customer_schema))\
     .select(col("customer.*"))\
-    .createOrReplaceTempView("Customer")
+    .createOrReplaceTempView("CustomerRecords")
+
 
 # TO-DO: JSON parsing will set non-existent fields to null, so let's select just the fields we want, where they are not null as a new dataframe called emailAndBirthDayStreamingDF
 emailAndBirthDayStreamingDF = spark.sql(
-    "SELECT email, birthDay FROM Customer WHERE email IS NOT NULL AND birthDay IS NOT NULL")
+    "SELECT email, birthDay FROM CustomerRecords WHERE email IS NOT NULL AND birthDay IS NOT NULL")
 
 
 # TO-DO: Split the birth year as a separate field from the birthday
@@ -148,7 +149,7 @@ emailAndBirthYearStreamingDF = emailAndBirthDayStreamingDF\
 stedi_events_topic_df = spark\
     .readStream\
     .format("kafka")\
-    .option("kafka.bootstrap.servers", "kafka:9092")\
+    .option("kafka.bootstrap.servers", "kafka:19092")\
     .option("subscribe", "stedi-events")\
     .option("startingOffsets", "earliest")\
     .load()
@@ -211,10 +212,10 @@ customer_risk_birthyear_df\
         "cast(customer as string) as key",
         "to_json(struct(*)) as value"
     )\
-    .writeStream \
-    .format("kafka") \
-    .option("kafka.bootstrap.servers", "kafka:9092")\
+    .writeStream\
+    .format("kafka")\
+    .option("kafka.bootstrap.servers", "kafka:19092")\
     .option("topic", "customer-risk")\
-    .option("checkpointLocation","/tmp/kafkacheckpoint")\
+    .option("checkpointLocation", "/tmp/kafkacheckpoint")\
     .start()\
     .awaitTermination()
